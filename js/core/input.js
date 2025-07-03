@@ -38,9 +38,11 @@ function handleKeyDown(e) {
         
         // Handle different game states
         if (gameState.currentState === GameState.START) {
-            window.startGame();
-            return;
-        }
+    if (window.startGame) {
+        window.startGame();
+    }
+    return;
+}
         if (gameState.currentState === GameState.GAME_OVER) {
             window.restartGame();
             return;

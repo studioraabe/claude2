@@ -12,7 +12,7 @@ const targetFrameTime = 1000 / targetFPS;
 export const gameState = {
     // Spiel-Grundwerte
     gameRunning: false,
-    currentState: null,
+    currentState: 'start',  // FIXED: War null, jetzt 'start'
     gameSpeed: 1,
     level: 1,
     score: 0,

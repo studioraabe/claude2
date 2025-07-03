@@ -1,7 +1,7 @@
-// core/player.js - Player Logic and State
+// core/player.js - Player Logic and State - FIXED VERSION
 
 import { GAME_CONSTANTS, CANVAS } from './constants.js';
-import { updateCamera, camera } from './camera.js'; // KRITISCH: camera importieren!
+import { updateCamera, camera } from './camera.js';
 import { soundManager, activeDropBuffs } from '../systems.js';
 import { createDoubleJumpParticles } from '../entities.js';
 
@@ -38,11 +38,11 @@ export function resetPlayer() {
 }
 
 export function updatePlayer(keys, gameState) {
-    // TEMPORARILY SIMPLIFIED - removed all activeDropBuffs references
+    // TEMPORARILY SIMPLIFIED - removed all activeDropBuffs references for now
     const moveSpeed = GAME_CONSTANTS.PLAYER_MOVE_SPEED * gameState.speedMultiplier;
     
     // Horizontal movement
-    if (keys.left && player.x > gameState.camera.x) {
+    if (keys.left && player.x > camera.x) {  // FIXED: camera.x direkt statt gameState.camera.x
         player.velocityX = -moveSpeed;
         player.facingDirection = -1;
     } else if (keys.right) {
@@ -53,7 +53,7 @@ export function updatePlayer(keys, gameState) {
     }
     
     player.x += player.velocityX;
-    player.x = Math.max(gameState.camera.x, player.x);
+    player.x = Math.max(camera.x, player.x);  // FIXED: camera.x direkt statt gameState.camera.x
     
     // Update camera based on player position
     updateCamera(player);

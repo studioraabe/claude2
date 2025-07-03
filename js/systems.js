@@ -64,8 +64,7 @@ window.ACHIEVEMENTS = ACHIEVEMENTS;
 window.loadAchievements = loadAchievements;
 window.loadGlobalHighscores = loadGlobalHighscores;
 
-// Drop System
-export const activeDropBuffs = {};
+
 
 // Make it globally available
 window.activeDropBuffs = activeDropBuffs;
@@ -142,6 +141,14 @@ function selectDropFromItems(items) {
     
     return items[items.length - 1];
 }
+
+export const activeDropBuffs = {
+    speedBoost: 0,
+    slowMotion: 0,
+    magnetism: 0,
+    jumpBoost: 0,
+    enemySlow: 0
+};
 
 export function collectDrop(drop) {
     soundManager.pickup();
