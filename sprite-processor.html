@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Original Sprite Processor - Für deine echten Pixel Art Sprites</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #eee;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #00ffff;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .section {
+            background: #16213e;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #0f3460;
+        }
+        
+        .section-title {
+            color: #00ff88;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #0f3460;
+            padding-bottom: 10px;
+        }
+        
+        .upload-zone {
+            border: 3px dashed #0f3460;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            background: #0a0a0f;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-zone:hover {
+            border-color: #00ffff;
+            background: #0f0f15;
+        }
+        
+        .upload-zone.dragover {
+            border-color: #00ff88;
+            background: #0f1f0f;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        .sprite-canvas {
+            background: #000;
+            border: 2px solid #333;
+            margin: 10px auto;
+            display: block;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+        
+        .controls {
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .controls button {
+            background: #0f3460;
+            color: #00ffff;
+            border: 1px solid #00ffff;
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        
+        .controls button:hover {
+            background: #00ffff;
+            color: #0f3460;
+        }
+        
+        .controls button.active {
+            background: #00ff88;
+            color: #0f3460;
+            border-color: #00ff88;
+        }
+        
+        .info-box {
+            background: #0a0a0f;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #00ffff;
+        }
+        
+        .code-block {
+            background: #000;
+            border: 1px solid #333;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+            color: #00ffff;
+            white-space: pre-wrap;
+        }
+        
+        .frame-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+            padding: 20px;
+            background: #0a0a0f;
+            border-radius: 5px;
+        }
+        
+        .frame-item {
+            background: #222;
+            border: 2px solid #555;
+            border-radius: 5px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .frame-item:hover {
+            border-color: #00ffff;
+            background: #333;
+        }
+        
+        .frame-item.selected {
+            border-color: #00ff88;
+            background: #0f2f0f;
+        }
+        
+        .frame-canvas {
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+            border: 1px solid #666;
+        }
+        
+        .download-btn {
+            background: #00ff88;
+            color: #0f3460;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px;
+        }
+        
+        .settings-panel {
+            background: #2a2a3a;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        
+        .slider-container {
+            margin: 10px 0;
+        }
+        
+        .slider-container label {
+            display: block;
+            margin-bottom: 5px;
+            color: #00ffff;
+        }
+        
+        .slider-container input[type="range"] {
+            width: 100%;
+            margin: 5px 0;
+        }
+        
+        .animation-setup {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border: 1px solid #0f3460;
+        }
+        
+        .animation-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 10px 0;
+            padding: 10px;
+            background: #0a0a0f;
+            border-radius: 3px;
+        }
+        
+        .animation-row label {
+            min-width: 80px;
+            color: #00ff88;
+            font-weight: bold;
+        }
+        
+        .animation-row input {
+            padding: 5px;
+            border: 1px solid #555;
+            background: #222;
+            color: #fff;
+            border-radius: 3px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Original Sprite Processor - Für deine echten Pixel Art Sprites</h1>
+        
+        <div class="section">
+            <div class="section-title">📁 Sprite Upload & Automatic Processing</div>
+            
+            <div class="upload-zone" id="uploadZone">
+                <h3>🎯 Drop dein Original-Sprite-Bild hier</h3>
+                <p>Oder klick zum Datei auswählen</p>
+                <p style="font-size: 12px; color: #888;">Unterstützt: PNG, GIF, JPG</p>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+            
+            <div id="analysisResults" class="info-box hidden">
+                <!-- Analysis results will be shown here -->
+            </div>
+        </div>
+        
+        <div class="section hidden" id="frameSection">
+            <div class="section-title">🎬 Automatisch erkannte Frames</div>
+            
+            <div class="settings-panel">
+                <h4>⚙️ Frame-Einstellungen</h4>
+                <div class="slider-container">
+                    <label>Frames pro Reihe:</label>
+                    <input type="range" id="framesPerRow" min="1" max="8" value="4">
+                    <span id="framesPerRowValue">4</span>
+                </div>
+                <div class="slider-container">
+                    <label>Anzahl Reihen:</label>
+                    <input type="range" id="numberOfRows" min="1" max="6" value="3">
+                    <span id="numberOfRowsValue">3</span>
+                </div>
+                <button id="reprocessBtn" class="controls button">🔄 Frames neu verarbeiten</button>
+            </div>
+            
+            <div id="frameGrid" class="frame-grid">
+                <!-- Extracted frames will be shown here -->
+            </div>
+        </div>
+        
+        <div class="section hidden" id="animationSection">
+            <div class="section-title">🎭 Animation Setup</div>
+            
+            <div class="animation-setup">
+                <h4>🎪 Erstelle deine Animationen</h4>
+                <div class="animation-row">
+                    <label>Idle:</label>
+                    <input type="text" id="idleFrames" placeholder="z.B. 0,1,2,3" value="0,1,2,3">
+                    <label>Speed:</label>
+                    <input type="number" id="idleSpeed" value="15" min="5" max="30">
+                    <button onclick="createAnimation('idle')">Erstellen</button>
+                </div>
+                <div class="animation-row">
+                    <label>Walk:</label>
+                    <input type="text" id="walkFrames" placeholder="z.B. 4,5,6,7" value="4,5,6,7">
+                    <label>Speed:</label>
+                    <input type="number" id="walkSpeed" value="10" min="5" max="30">
+                    <button onclick="createAnimation('walk')">Erstellen</button>
+                </div>
+                <div class="animation-row">
+                    <label>Jump:</label>
+                    <input type="text" id="jumpFrames" placeholder="z.B. 8,9" value="8,9">
+                    <label>Speed:</label>
+                    <input type="number" id="jumpSpeed" value="8" min="5" max="30">
+                    <button onclick="createAnimation('jump')">Erstellen</button>
+                </div>
+                <div class="animation-row">
+                    <label>Custom:</label>
+                    <input type="text" id="customFrames" placeholder="Frame-Nummern">
+                    <input type="text" id="customName" placeholder="Name" value="attack">
+                    <label>Speed:</label>
+                    <input type="number" id="customSpeed" value="12" min="5" max="30">
+                    <button onclick="createCustomAnimation()">Erstellen</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section hidden" id="previewSection">
+            <div class="section-title">🎮 Live Animation Preview</div>
+            <div style="text-align: center;">
+                <canvas id="previewCanvas" class="sprite-canvas" width="400" height="300"></canvas>
+                
+                <div class="controls" id="animationControls">
+                    <!-- Animation buttons will be generated here -->
+                </div>
+                
+                <div class="controls">
+                    <button id="flipBtn">🔄 Flip Direction</button>
+                    <button id="playPauseBtn">⏸️ Pause</button>
+                </div>
+                
+                <div class="slider-container">
+                    <label>Preview Scale:</label>
+                    <input type="range" id="scaleSlider" min="1" max="8" value="4">
+                    <span id="scaleValue">4</span>x
+                </div>
+            </div>
+        </div>
+        
+        <div class="section hidden" id="outputSection">
+            <div class="section-title">📋 Finales Sprite Sheet</div>
+            <div style="text-align: center;">
+                <canvas id="outputCanvas" class="sprite-canvas"></canvas>
+                <br>
+                <button class="download-btn" id="downloadSheet">💾 Download Sprite Sheet</button>
+                <button class="download-btn" id="downloadCode">📄 Download Code</button>
+            </div>
+        </div>
+        
+        <div class="section hidden" id="codeSection">
+            <div class="section-title">🚀 Fertige Integration</div>
+            <div class="code-block" id="generatedCode">
+                // Code wird automatisch generiert...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class OriginalSpriteProcessor {
+            constructor() {
+                this.originalImage = null;
+                this.extractedFrames = [];
+                this.animations = {};
+                this.currentAnimation = 'idle';
+                this.currentFrame = 0;
+                this.frameTimer = 0;
+                this.playing = true;
+                this.flipped = false;
+                this.scale = 4;
+                
+                this.frameWidth = 64;
+                this.frameHeight = 64;
+                this.framesPerRow = 4;
+                this.numberOfRows = 3;
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupFileUpload();
+                this.setupEventListeners();
+                this.setupCanvases();
+            }
+            
+            setupFileUpload() {
+                const uploadZone = document.getElementById('uploadZone');
+                const fileInput = document.getElementById('fileInput');
+                
+                uploadZone.addEventListener('click', () => fileInput.click());
+                
+                uploadZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadZone.classList.add('dragover');
+                });
+                
+                uploadZone.addEventListener('dragleave', () => {
+                    uploadZone.classList.remove('dragover');
+                });
+                
+                uploadZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadZone.classList.remove('dragover');
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        this.processFile(files[0]);
+                    }
+                });
+                
+                fileInput.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        this.processFile(e.target.files[0]);
+                    }
+                });
+            }
+            
+            setupEventListeners() {
+                // Frame processing controls
+                document.getElementById('framesPerRow').addEventListener('input', (e) => {
+                    this.framesPerRow = parseInt(e.target.value);
+                    document.getElementById('framesPerRowValue').textContent = this.framesPerRow;
+                });
+                
+                document.getElementById('numberOfRows').addEventListener('input', (e) => {
+                    this.numberOfRows = parseInt(e.target.value);
+                    document.getElementById('numberOfRowsValue').textContent = this.numberOfRows;
+                });
+                
+                document.getElementById('reprocessBtn').addEventListener('click', () => {
+                    if (this.originalImage) {
+                        this.extractFrames();
+                        this.showFrameSection();
+                    }
+                });
+                
+                // Preview controls
+                document.getElementById('flipBtn').addEventListener('click', () => {
+                    this.flipped = !this.flipped;
+                });
+                
+                document.getElementById('playPauseBtn').addEventListener('click', () => {
+                    this.playing = !this.playing;
+                    document.getElementById('playPauseBtn').textContent = this.playing ? '⏸️ Pause' : '▶️ Play';
+                });
+                
+                document.getElementById('scaleSlider').addEventListener('input', (e) => {
+                    this.scale = parseInt(e.target.value);
+                    document.getElementById('scaleValue').textContent = this.scale;
+                });
+                
+                // Download buttons
+                document.getElementById('downloadSheet').addEventListener('click', () => {
+                    this.downloadSpriteSheet();
+                });
+                
+                document.getElementById('downloadCode').addEventListener('click', () => {
+                    this.downloadCode();
+                });
+            }
+            
+            setupCanvases() {
+                this.previewCanvas = document.getElementById('previewCanvas');
+                this.previewCtx = this.previewCanvas.getContext('2d');
+                this.previewCtx.imageSmoothingEnabled = false;
+                
+                this.outputCanvas = document.getElementById('outputCanvas');
+                this.outputCtx = this.outputCanvas.getContext('2d');
+                this.outputCtx.imageSmoothingEnabled = false;
+                
+                this.animate();
+            }
+            
+            processFile(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        this.originalImage = img;
+                        this.analyzeImage();
+                        this.extractFrames();
+                        this.showFrameSection();
+                        this.showAnimationSection();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            analyzeImage() {
+                const img = this.originalImage;
+                
+                // Auto-detect frame dimensions
+                this.frameWidth = Math.floor(img.width / this.framesPerRow);
+                this.frameHeight = Math.floor(img.height / this.numberOfRows);
+                
+                const results = document.getElementById('analysisResults');
+                results.innerHTML = `
+                    <h4>🔍 Original Sprite Analyse:</h4>
+                    <p><strong>📏 Bild-Dimensionen:</strong> ${img.width} x ${img.height} Pixel</p>
+                    <p><strong>🎬 Erkannte Frame-Größe:</strong> ${this.frameWidth} x ${this.frameHeight} Pixel</p>
+                    <p><strong>🎭 Layout:</strong> ${this.framesPerRow} Spalten × ${this.numberOfRows} Reihen</p>
+                    <p><strong>📦 Gesamt-Frames:</strong> ${this.framesPerRow * this.numberOfRows}</p>
+                    <p><strong>🎨 Stil:</strong> Original Pixel Art mit authentischen Details</p>
+                    <p><strong>✨ Vorteil:</strong> Maximale Detailtiefe und Authentizität!</p>
+                `;
+                results.classList.remove('hidden');
+            }
+            
+            extractFrames() {
+                this.extractedFrames = [];
+                const frameGrid = document.getElementById('frameGrid');
+                frameGrid.innerHTML = '';
+                
+                for (let row = 0; row < this.numberOfRows; row++) {
+                    for (let col = 0; col < this.framesPerRow; col++) {
+                        const frameIndex = row * this.framesPerRow + col;
+                        
+                        // Check if we're within image bounds
+                        const frameX = col * this.frameWidth;
+                        const frameY = row * this.frameHeight;
+                        
+                        if (frameX + this.frameWidth <= this.originalImage.width && 
+                            frameY + this.frameHeight <= this.originalImage.height) {
+                            
+                            // Extract frame
+                            const frameCanvas = document.createElement('canvas');
+                            frameCanvas.width = this.frameWidth;
+                            frameCanvas.height = this.frameHeight;
+                            const frameCtx = frameCanvas.getContext('2d');
+                            frameCtx.imageSmoothingEnabled = false;
+                            
+                            frameCtx.drawImage(
+                                this.originalImage,
+                                frameX, frameY, this.frameWidth, this.frameHeight,
+                                0, 0, this.frameWidth, this.frameHeight
+                            );
+                            
+                            this.extractedFrames.push({
+                                canvas: frameCanvas,
+                                index: frameIndex,
+                                row: row,
+                                col: col
+                            });
+                            
+                            // Create preview element
+                            const frameItem = document.createElement('div');
+                            frameItem.className = 'frame-item';
+                            
+                            const previewCanvas = document.createElement('canvas');
+                            previewCanvas.className = 'frame-canvas';
+                            previewCanvas.width = 80;
+                            previewCanvas.height = 80;
+                            const previewCtx = previewCanvas.getContext('2d');
+                            previewCtx.imageSmoothingEnabled = false;
+                            
+                            // Scale frame to fit preview
+                            const scale = 80 / Math.max(this.frameWidth, this.frameHeight);
+                            const drawWidth = this.frameWidth * scale;
+                            const drawHeight = this.frameHeight * scale;
+                            const drawX = (80 - drawWidth) / 2;
+                            const drawY = (80 - drawHeight) / 2;
+                            
+                            previewCtx.drawImage(frameCanvas, drawX, drawY, drawWidth, drawHeight);
+                            
+                            frameItem.innerHTML = `
+                                <div style="margin-bottom: 5px;">Frame ${frameIndex}</div>
+                            `;
+                            frameItem.appendChild(previewCanvas);
+                            
+                            frameGrid.appendChild(frameItem);
+                        }
+                    }
+                }
+            }
+            
+            showFrameSection() {
+                document.getElementById('frameSection').classList.remove('hidden');
+            }
+            
+            showAnimationSection() {
+                document.getElementById('animationSection').classList.remove('hidden');
+            }
+            
+            createAnimation(name, frameIndices, speed) {
+                if (!frameIndices) {
+                    // Get from input fields
+                    const frameInput = document.getElementById(name + 'Frames').value;
+                    frameIndices = frameInput.split(',').map(f => parseInt(f.trim())).filter(f => !isNaN(f));
+                    speed = parseInt(document.getElementById(name + 'Speed').value);
+                }
+                
+                const frames = frameIndices.map(index => this.extractedFrames[index]).filter(frame => frame);
+                
+                if (frames.length === 0) {
+                    alert('Keine gültigen Frames für Animation!');
+                    return;
+                }
+                
+                this.animations[name] = {
+                    frames: frames,
+                    speed: speed,
+                    name: name.charAt(0).toUpperCase() + name.slice(1)
+                };
+                
+                this.updateAnimationControls();
+                this.generateSpriteSheet();
+                this.generateCode();
+                this.showPreviewSection();
+                this.showOutputSection();
+                this.showCodeSection();
+                
+                console.log(`Animation "${name}" erstellt mit ${frames.length} Frames`);
+            }
+            
+            updateAnimationControls() {
+                const controlsContainer = document.getElementById('animationControls');
+                controlsContainer.innerHTML = '';
+                
+                Object.keys(this.animations).forEach(animName => {
+                    const button = document.createElement('button');
+                    button.textContent = this.animations[animName].name;
+                    button.className = animName === this.currentAnimation ? 'active' : '';
+                    button.addEventListener('click', () => this.setAnimation(animName));
+                    controlsContainer.appendChild(button);
+                });
+            }
+            
+            setAnimation(animName) {
+                if (this.animations[animName]) {
+                    this.currentAnimation = animName;
+                    this.currentFrame = 0;
+                    this.frameTimer = 0;
+                    
+                    this.updateAnimationControls();
+                }
+            }
+            
+            showPreviewSection() {
+                document.getElementById('previewSection').classList.remove('hidden');
+            }
+            
+            showOutputSection() {
+                document.getElementById('outputSection').classList.remove('hidden');
+            }
+            
+            showCodeSection() {
+                document.getElementById('codeSection').classList.remove('hidden');
+            }
+            
+            generateSpriteSheet() {
+                const maxFrames = Math.max(...Object.values(this.animations).map(anim => anim.frames.length));
+                const animCount = Object.keys(this.animations).length;
+                
+                if (animCount === 0) return;
+                
+                this.outputCanvas.width = this.frameWidth * maxFrames;
+                this.outputCanvas.height = this.frameHeight * animCount;
+                
+                this.outputCtx.fillStyle = '#000';
+                this.outputCtx.fillRect(0, 0, this.outputCanvas.width, this.outputCanvas.height);
+                
+                let row = 0;
+                Object.entries(this.animations).forEach(([name, anim]) => {
+                    anim.frames.forEach((frame, col) => {
+                        this.outputCtx.drawImage(
+                            frame.canvas,
+                            col * this.frameWidth,
+                            row * this.frameHeight
+                        );
+                    });
+                    row++;
+                });
+            }
+            
+            generateCode() {
+                const animationsConfig = {};
+                let row = 0;
+                
+                Object.entries(this.animations).forEach(([name, anim]) => {
+                    animationsConfig[name] = {
+                        frames: anim.frames.length,
+                        speed: anim.speed,
+                        row: row
+                    };
+                    row++;
+                });
+                
+                const code = `// 🎨 Original Sprite System - Basierend auf deinen echten Pixel Art Sprites!
+
+export class OriginalPlayerSprite {
+    constructor() {
+        this.frameWidth = ${this.frameWidth};
+        this.frameHeight = ${this.frameHeight};
+        this.currentAnimation = 'idle';
+        this.currentFrame = 0;
+        this.frameTimer = 0;
+        
+        // Animationen basierend auf deinen originalen Sprites!
+        this.animations = ${JSON.stringify(animationsConfig, null, 8)};
+        
+        this.spriteSheet = new Image();
+        this.spriteSheet.src = 'assets/original-player-sprites.png'; // Dein exportiertes Sprite-Sheet
+        this.loaded = false;
+        
+        this.spriteSheet.onload = () => {
+            this.loaded = true;
+            console.log('🎨 Original sprites geladen - maximale Authentizität!');
+        };
+    }
+    
+    setAnimation(animName) {
+        if (this.animations[animName] && this.currentAnimation !== animName) {
+            this.currentAnimation = animName;
+            this.currentFrame = 0;
+            this.frameTimer = 0;
+        }
+    }
+    
+    update() {
+        const anim = this.animations[this.currentAnimation];
+        this.frameTimer++;
+        
+        if (this.frameTimer >= anim.speed) {
+            this.currentFrame = (this.currentFrame + 1) % anim.frames;
+            this.frameTimer = 0;
+        }
+    }
+    
+    draw(ctx, x, y, facingLeft = false, scale = 1) {
+        if (!this.loaded) return;
+        
+        const anim = this.animations[this.currentAnimation];
+        const frameX = this.currentFrame * this.frameWidth;
+        const frameY = anim.row * this.frameHeight;
+        
+        ctx.save();
+        
+        // Center the sprite and apply transformations
+        const centerX = x + (this.frameWidth * scale) / 2;
+        const centerY = y + (this.frameHeight * scale) / 2;
+        
+        ctx.translate(centerX, centerY);
+        if (facingLeft) ctx.scale(-scale, scale);
+        else ctx.scale(scale, scale);
+        ctx.translate(-this.frameWidth / 2, -this.frameHeight / 2);
+        
+        ctx.drawImage(
+            this.spriteSheet,
+            frameX, frameY, this.frameWidth, this.frameHeight,
+            0, 0, this.frameWidth, this.frameHeight
+        );
+        
+        ctx.restore();
+    }
+}
+
+// 🚀 Integration in dein Dungeon Runner Spiel:
+
+// 1. In core/player.js:
+/*
+import { OriginalPlayerSprite } from './original-player-sprite.js';
+
+export function resetPlayer() {
+    // ... existing code ...
+    player.sprite = new OriginalPlayerSprite();
+}
+
+export function updatePlayer(keys, gameState) {
+    // ... bestehende Bewegungslogik ...
+    
+    // Animation basierend auf Spieler-Zustand
+    if (!player.grounded) {
+        player.sprite.setAnimation('jump'); // oder 'action'
+    } else if (Math.abs(player.velocityX) > 0.5) {
+        player.sprite.setAnimation('walk');
+    } else {
+        player.sprite.setAnimation('idle');
+    }
+    
+    player.sprite.update();
+}
+*/
+
+// 2. In rendering/player.js:
+/*
+export function drawPlayer(ctx, x, y, player, gameState) {
+    // Komplett ersetzen mit:
+    if (player.sprite) {
+        player.sprite.draw(ctx, x, y, player.facingDirection === -1, 1.2);
+    }
+    
+    // Alle anderen Effekte (Invulnerability, Ghost Mode, etc.) bleiben gleich
+}
+*/
+
+// ✨ FERTIG! Deine originalen Sprites sind jetzt perfekt integriert!
+// 🎯 100% authentische Pixel Art direkt aus deinen Original-Dateien!`;
+                
+                document.getElementById('generatedCode').textContent = code;
+            }
+            
+            animate() {
+                this.update();
+                this.render();
+                requestAnimationFrame(() => this.animate());
+            }
+            
+            update() {
+                if (!this.playing || !this.animations[this.currentAnimation]) return;
+                
+                const anim = this.animations[this.currentAnimation];
+                this.frameTimer++;
+                
+                if (this.frameTimer >= anim.speed) {
+                    this.currentFrame = (this.currentFrame + 1) % anim.frames.length;
+                    this.frameTimer = 0;
+                }
+            }
+            
+            render() {
+                if (!this.animations[this.currentAnimation]) return;
+                
+                this.previewCtx.fillStyle = '#222';
+                this.previewCtx.fillRect(0, 0, 400, 300);
+                
+                const anim = this.animations[this.currentAnimation];
+                const frame = anim.frames[this.currentFrame];
+                
+                if (!frame) return;
+                
+                const drawWidth = this.frameWidth * this.scale;
+                const drawHeight = this.frameHeight * this.scale;
+                const drawX = (400 - drawWidth) / 2;
+                const drawY = (300 - drawHeight) / 2;
+                
+                this.previewCtx.save();
+                
+                if (this.flipped) {
+                    this.previewCtx.translate(400, 0);
+                    this.previewCtx.scale(-1, 1);
+                }
+                
+                this.previewCtx.drawImage(
+                    frame.canvas,
+                    drawX, drawY, drawWidth, drawHeight
+                );
+                
+                this.previewCtx.restore();
+                
+                // Info display
+                this.previewCtx.fillStyle = '#00ffff';
+                this.previewCtx.font = '14px Courier New';
+                this.previewCtx.fillText(
+                    `${anim.name}: Frame ${this.currentFrame + 1}/${anim.frames.length}`,
+                    10, 25
+                );
+                this.previewCtx.fillText(`Scale: ${this.scale}x | Playing: ${this.playing}`, 10, 45);
+            }
+            
+            downloadSpriteSheet() {
+                const link = document.createElement('a');
+                link.download = 'original-player-sprites.png';
+                link.href = this.outputCanvas.toDataURL();
+                link.click();
+            }
+            
+            downloadCode() {
+                const code = document.getElementById('generatedCode').textContent;
+                const blob = new Blob([code], { type: 'text/javascript' });
+                const link = document.createElement('a');
+                link.download = 'original-player-sprite.js';
+                link.href = URL.createObjectURL(blob);
+                link.click();
+            }
+        }
+        
+        // Global functions for animation creation
+        window.createAnimation = function(name) {
+            processor.createAnimation(name);
+        };
+        
+        window.createCustomAnimation = function() {
+            const frames = document.getElementById('customFrames').value;
+            const name = document.getElementById('customName').value;
+            const speed = parseInt(document.getElementById('customSpeed').value);
+            
+            if (!frames || !name) {
+                alert('Bitte Frames und Name eingeben!');
+                return;
+            }
+            
+            const frameIndices = frames.split(',').map(f => parseInt(f.trim())).filter(f => !isNaN(f));
+            processor.createAnimation(name, frameIndices, speed);
+        };
+        
+        // Initialize the processor
+        const processor = new OriginalSpriteProcessor();
+    </script>
+</body>
+</html>
